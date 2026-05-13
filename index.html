@@ -1,1 +1,291 @@
-hello
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>St. Bernard Parish JP Ward Finder</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<style>
+:root{--navy:#0d1b2a;--gold:#c9a84c;--cream:#f0ebe0;--muted:#8a9aaa;--panel:#111d2b;--border:rgba(201,168,76,0.25)}
+*{margin:0;padding:0;box-sizing:border-box}html,body{height:100%;font-family:Arial,sans-serif}
+body{background:var(--navy);color:var(--cream);display:flex;flex-direction:column;overflow:hidden;height:100vh}
+header{background:linear-gradient(135deg,#0a1520,#1a2d40);border-bottom:2px solid var(--gold);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.ht h1{font-size:.92rem;color:var(--gold);font-weight:700;line-height:1.2}
+.ht p{font-size:.57rem;color:var(--muted);margin-top:1px;font-family:monospace}
+.tabs{display:flex;background:#0a1520;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:10px 6px;text-align:center;cursor:pointer;font-size:.72rem;font-family:monospace;color:var(--muted);border-bottom:2px solid transparent;user-select:none}
+.tab.on{color:var(--gold);border-bottom-color:var(--gold)}
+.panel{display:none;flex:1;overflow:hidden;flex-direction:column;min-height:0}.panel.on{display:flex}
+.sw{padding:11px 12px 9px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;background:var(--panel)}
+.sl{font-family:monospace;font-size:.58rem;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;display:block;margin-bottom:6px}
+.sr{display:flex;gap:6px}
+.sr input{flex:1;background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--cream);padding:9px 10px;font-size:.85rem;border-radius:4px;outline:none}
+.sr input:focus{border-color:var(--gold)}.sr input::placeholder{color:var(--muted)}
+.sr button{background:var(--gold);border:none;color:#0a1520;padding:9px 14px;font-family:monospace;font-size:.73rem;font-weight:700;border-radius:4px;cursor:pointer}
+.sh{font-size:.62rem;color:var(--muted);margin-top:5px;line-height:1.4}
+.rb{display:none;padding:8px 12px;background:rgba(201,168,76,.1);border-bottom:1px solid var(--border);flex-shrink:0}.rb.on{display:block}
+.rt{font-size:.85rem;color:var(--gold);font-weight:700}.rn{font-size:.64rem;color:var(--muted);margin-top:2px;line-height:1.4}
+.ws{flex:1;overflow-y:auto;padding:8px;background:var(--panel)}
+.wc{border:1px solid rgba(255,255,255,.08);border-radius:6px;margin-bottom:8px;overflow:hidden}.wc.on{border-color:var(--gold)}
+.wh{display:flex;align-items:center;gap:9px;padding:9px 11px;cursor:pointer;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.05)}
+.wsw{width:5px;height:32px;border-radius:3px;flex-shrink:0}
+.wt{font-family:monospace;font-weight:700;font-size:.82rem;color:var(--cream)}.wst{font-size:.67rem;color:var(--muted);margin-top:1px}
+.wb{padding:10px 12px;background:rgba(0,0,0,.2)}
+.ob{margin-bottom:8px}.ro{font-family:monospace;font-size:.56rem;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;margin-bottom:3px}
+.pn{font-size:.87rem;font-weight:600;color:var(--cream);margin-bottom:2px}
+.cl{display:flex;align-items:center;gap:5px;font-size:.74rem;color:var(--muted);margin-top:2px}.cl a{color:var(--gold);text-decoration:none}
+.sp{height:1px;background:rgba(255,255,255,.06);margin:7px 0}
+.cn{font-size:.64rem;color:rgba(138,154,170,.7);line-height:1.4;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.05)}
+.msearch{padding:9px 11px;border-bottom:1px solid var(--border);background:var(--panel);flex-shrink:0;display:flex;gap:6px}
+.msearch input{flex:1;background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--cream);padding:8px 10px;font-size:.83rem;border-radius:4px;outline:none}
+.msearch input:focus{border-color:var(--gold)}.msearch input::placeholder{color:var(--muted)}
+.msearch button{background:var(--gold);border:none;color:#0a1520;padding:8px 12px;font-family:monospace;font-size:.72rem;font-weight:700;border-radius:4px;cursor:pointer;white-space:nowrap}
+.msh2{font-size:.6rem;color:var(--muted);padding:4px 11px 6px;flex-shrink:0;background:var(--panel);border-bottom:1px solid var(--border)}
+.mib{background:#0d2035;border-bottom:1px solid var(--border);padding:8px 12px;flex-shrink:0;min-height:50px;display:flex;align-items:center}
+.mph{font-size:.71rem;color:var(--muted);font-style:italic}
+.mco{display:none;width:100%}
+.mwn{font-size:.78rem;font-weight:700;color:var(--gold);font-family:monospace;margin-bottom:3px}
+.mcols{display:flex;gap:14px;flex-wrap:wrap}
+.mcol .mr{font-family:monospace;font-size:.55rem;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.mcol .mn{font-size:.78rem;font-weight:600;color:var(--cream)}.mcol .mp{font-size:.74rem;color:var(--gold)}
+.mw{flex:1;position:relative;min-height:0}
+#map{width:100%;height:100%}
+.mls{background:#0a1520;border-top:1px solid var(--border);padding:5px 10px;display:flex;flex-wrap:wrap;gap:4px 10px;flex-shrink:0}
+.li{display:flex;align-items:center;gap:5px;font-size:.61rem;font-family:monospace;color:var(--muted);cursor:pointer;padding:2px 5px;border-radius:3px}
+.li:hover,.li.on{color:var(--cream);background:rgba(201,168,76,.12)}
+.ld{width:9px;height:9px;border-radius:50%;flex-shrink:0;border:2px solid}
+.md{background:#060e18;border-top:1px solid rgba(255,255,255,.04);padding:4px 10px;font-size:.57rem;color:rgba(255,255,255,.25);line-height:1.4;flex-shrink:0}
+.leaflet-container{background:#1a2a3a}.leaflet-tile-pane{filter:brightness(.88) saturate(.75)}
+.leaflet-control-zoom a{background:#111d2b!important;color:var(--gold)!important;border-color:var(--border)!important}
+.leaflet-control-attribution{background:rgba(10,20,30,.7)!important;color:rgba(255,255,255,.3)!important;font-size:9px!important}
+.wtt{background:rgba(10,20,30,.92)!important;border:1px solid var(--gold)!important;color:var(--cream)!important;font-family:monospace!important;font-size:11px!important;padding:4px 8px!important;border-radius:4px!important;box-shadow:none!important;white-space:nowrap}
+.leaflet-popup-content-wrapper{background:var(--navy)!important;color:var(--cream)!important;border:1px solid var(--gold)!important;border-radius:6px!important}
+.leaflet-popup-tip{background:var(--navy)!important}
+</style>
+</head>
+<body>
+<header>
+  <div style="font-size:20px">&#x2696;&#xFE0F;</div>
+  <div class="ht">
+    <h1>St. Bernard Parish &mdash; Justice of the Peace Finder</h1>
+    <p>44TH JPC COURT &middot; WARDS A&ndash;K &middot; SOURCE: SBJP.ORG</p>
+  </div>
+</header>
+<div class="tabs">
+  <div class="tab on" id="td" onclick="showTab('dir')">&#x1F4CB; DIRECTORY</div>
+  <div class="tab" id="tm" onclick="showTab('map')">&#x1F5FA; WARD MAP</div>
+</div>
+<div class="panel on" id="pdir">
+  <div class="sw">
+    <span class="sl">Search by Address or Community</span>
+    <div class="sr">
+      <input id="ds" type="text" placeholder="e.g. 1966 Benjamin St, Arabi"/>
+      <button onclick="doSearch('dir')">Search</button>
+    </div>
+    <p class="sh">Full address, community name, or ZIP (70032 &middot; 70043 &middot; 70075 &middot; 70092 &middot; 70085)</p>
+  </div>
+  <div class="rb" id="rb"><div class="rt" id="rt"></div><div class="rn" id="rn"></div></div>
+  <div class="ws" id="ws"></div>
+</div>
+<div class="panel" id="pmap">
+  <div class="msearch">
+    <input id="ms2" type="text" placeholder="Search any address to find its ward&hellip;"/>
+    <button onclick="doSearch('map')">Go</button>
+  </div>
+  <p class="msh2">Enter any St. Bernard Parish address &mdash; we'll identify the ward and mark it on the map</p>
+  <div class="mib">
+    <div class="mph" id="mph">Tap a ward on the map &mdash; or search an address above</div>
+    <div class="mco" id="mco">
+      <div class="mwn" id="mwn"></div>
+      <div class="mcols">
+        <div class="mcol"><div class="mr">Justice of the Peace</div><div class="mn" id="mjn"></div><div class="mp" id="mjp"></div></div>
+        <div class="mcol"><div class="mr">Constable</div><div class="mn" id="mcn"></div><div class="mp" id="mcp"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="mw"><div id="map"></div></div>
+  <div class="mls" id="mls"></div>
+  <div class="md">&#x26A0; Ward overlays approximate. Exact boundaries in Parish Code of Ordinances. Clerk of Court: (504) 271-3434</div>
+</div>
+<script>
+var W={
+  A:{c:'#e74c3c',l:'Ward A',s:'W. Arabi',a:'Western Arabi — west of Friscoville Ave, bordering Orleans Parish',jp:{n:'Kevin J. Hoffman',p:'504-202-1934',e:'jphoffmanwarda@yahoo.com'},co:{n:'Merritt Landry',p:'504-258-1934',e:'merrittlandry@yahoo.com'}},
+  B:{c:'#e67e22',l:'Ward B',s:'E. Arabi',a:'Eastern Arabi — east of Friscoville Ave toward Chalmette',jp:{n:'Penny Hoffman',p:'504-224-1060',e:'jpwardb@gmail.com'},co:{n:'Jason Landry',p:'504-913-9889',e:'jason@dts_direct.com'}},
+  C:{c:'#d4ac0d',l:'Ward C',s:'NW Chalmette',a:'NW Chalmette — north of W. Judge Perez Dr., western portion',jp:{n:'Beau Bowman',p:'985-507-5462',e:'beaubowman@sbjp.org'},co:{n:'Tina Micheu',p:'504-913-4485',e:'tbmicheu@yahoo.com'}},
+  D:{c:'#27ae60',l:'Ward D',s:'SW Chalmette',a:'SW Chalmette — south of W. Judge Perez Dr., western portion',jp:{n:'Patrick Giraud',p:'504-453-6624',e:'patgiraudlaw@gmail.com'},co:{n:'Lester Hueschen',p:'504-228-7909',e:'hueschen01@yahoo.com'}},
+  E:{c:'#1abc9c',l:'Ward E',s:'N-Central Chalmette',a:'N-Central Chalmette — north of W. Judge Perez Dr., central portion',jp:{n:'Luann Landry',p:'504-202-1060',e:'luannlandry@hotmail.com'},co:{n:'Henry J. Maitre III',p:'504-583-7730',e:''}},
+  F:{c:'#3498db',l:'Ward F',s:'S-Central Chalmette',a:'S-Central Chalmette — south of W. Judge Perez Dr., central portion',jp:{n:'Charles D. Jackson',p:'504-609-7509',e:'jpwardf@yahoo.com'},co:{n:'Andrew Sercovich',p:'504-756-9158',e:''}},
+  G:{c:'#9b59b6',l:'Ward G',s:'NE Chalmette',a:'NE Chalmette — north of W. Judge Perez Dr., eastern portion',jp:{n:'Kenny Henderson',p:'504-330-3136',e:'kwh3804@yahoo.com'},co:{n:'Brian Reaney Sr.',p:'504-382-3600',e:''}},
+  H:{c:'#c0392b',l:'Ward H',s:'SE Chalmette',a:'SE Chalmette — south of W. Judge Perez Dr., eastern portion',jp:{n:'Jeff Southerland',p:'504-512-2908',e:'stbjpwardh@yahoo.com'},co:{n:'Craig Miller',p:'504-430-7901',e:'craigmiller1950@gmail.com'}},
+  I:{c:'#16a085',l:'Ward I',s:'Meraux',a:'Meraux / Docville — between Chalmette and Violet along the river',jp:{n:'Harry Fisher III',p:'504-453-7021',e:'h3jpwardi@gmail.com'},co:{n:'John Green',p:'504-271-3434',e:''}},
+  J:{c:'#2471a3',l:'Ward J',s:'Violet',a:'Violet — community of Violet, lower mid-parish',jp:{n:'Tamara Jones',p:'504-382-3699',e:'jpwardj2026@gmail.com'},co:{n:'Tony "Te-Ton" Jeansonne',p:'504-628-3201',e:'constable.ward.j@gmail.com'}},
+  K:{c:'#7f8c8d',l:'Ward K',s:'Lower St. Bernard',a:'Lower St. Bernard — Poydras, St. Bernard Village, Caernarvon, Shell Beach, Reggio, Delacroix, Yscloskey',jp:{n:'Bruce Jackson',p:'504-247-2501',e:'bjackson8549@yahoo.com'},co:{n:'Tony Guerra',p:'504-583-1555',e:'tnygrr@yahoo.com'}}
+};
+
+/* CORRECTED COORDINATES — verified against OSM satellite imagery
+   Format: [lng, lat]
+   River (N) edge ~29.957, Marsh (S) edge ~29.910
+   Judge Perez Dr divides N/S Chalmette at ~29.940
+   A/B split (Friscoville): ~-89.974
+   Chalmette blocks: -89.974 to -89.930 split into 3 columns ~0.015 wide each
+   Meraux: -89.930 to -89.908
+   Violet: -89.908 to -89.872
+   Lower SB: -89.872 east
+*/
+var POLYS={
+  A:[[-90.002,29.957],[-89.974,29.957],[-89.974,29.910],[-90.002,29.910]],
+  B:[[-89.974,29.957],[-89.957,29.957],[-89.957,29.910],[-89.974,29.910]],
+  C:[[-89.957,29.957],[-89.944,29.957],[-89.944,29.940],[-89.957,29.940]],
+  D:[[-89.957,29.940],[-89.944,29.940],[-89.944,29.910],[-89.957,29.910]],
+  E:[[-89.944,29.957],[-89.936,29.957],[-89.936,29.940],[-89.944,29.940]],
+  F:[[-89.944,29.940],[-89.936,29.940],[-89.936,29.910],[-89.944,29.910]],
+  G:[[-89.936,29.957],[-89.928,29.957],[-89.928,29.940],[-89.936,29.940]],
+  H:[[-89.936,29.940],[-89.928,29.940],[-89.928,29.910],[-89.936,29.910]],
+  I:[[-89.928,29.957],[-89.908,29.957],[-89.908,29.905],[-89.928,29.905]],
+  J:[[-89.908,29.957],[-89.872,29.957],[-89.872,29.897],[-89.908,29.897]],
+  K:[[-89.872,29.955],[-89.700,29.940],[-89.700,29.840],[-89.872,29.855]]
+};
+
+var KW=[
+  {k:['arabi','70032'],w:'A',n:'Arabi spans Wards A & B. Showing Ward A — confirm your exact block with the Clerk of Court.'},
+  {k:['chalmette','70043'],w:'C',n:'Chalmette covers Wards C-H. Showing Ward C by default — address verification recommended.'},
+  {k:['meraux','docville','70075'],w:'I',n:null},
+  {k:['violet','70092'],w:'J',n:null},
+  {k:['poydras','st. bernard','saint bernard','caernarvon','reggio','shell beach','delacroix','yscloskey','hopedale','70085'],w:'K',n:null}
+];
+var lmap=null,lpolys={},pin=null;
+
+function showTab(id){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+  document.getElementById('p'+id).classList.add('on');
+  document.getElementById(id==='dir'?'td':'tm').classList.add('on');
+  if(id==='map'&&lmap)setTimeout(function(){lmap.invalidateSize();},80);
+}
+function buildCards(){
+  var s=document.getElementById('ws');
+  Object.keys(W).forEach(function(k){
+    var w=W[k],d=document.createElement('div');
+    d.className='wc';d.id='c'+k;
+    var h='<div class="wh" onclick="pick(\''+k+'\')">'+'<div class="wsw" style="background:'+w.c+'"></div>';
+    h+='<div><div class="wt">'+w.l+'</div><div class="wst">'+w.s+'</div></div></div>';
+    h+='<div class="wb"><div class="ob"><div class="ro">Justice of the Peace</div>';
+    h+='<div class="pn">'+w.jp.n+'</div><div class="cl">&#x1F4DE; <a href="tel:'+w.jp.p+'">'+w.jp.p+'</a></div>';
+    if(w.jp.e)h+='<div class="cl">&#x2709; <a href="mailto:'+w.jp.e+'">'+w.jp.e+'</a></div>';
+    h+='</div><div class="sp"></div><div class="ob"><div class="ro">Constable</div>';
+    h+='<div class="pn">'+w.co.n+'</div><div class="cl">&#x1F4DE; <a href="tel:'+w.co.p+'">'+w.co.p+'</a></div>';
+    if(w.co.e)h+='<div class="cl">&#x2709; <a href="mailto:'+w.co.e+'">'+w.co.e+'</a></div>';
+    h+='</div><div class="cn">'+w.a+'</div></div>';
+    d.innerHTML=h;s.appendChild(d);
+  });
+}
+function buildLegend(){
+  var s=document.getElementById('mls');
+  Object.keys(W).forEach(function(k){
+    var w=W[k],i=document.createElement('div');
+    i.className='li';i.id='l'+k;
+    i.innerHTML='<div class="ld" style="background:transparent;border-color:'+w.c+'"></div>'+k+' - '+w.s;
+    i.onclick=function(){pick(k);};s.appendChild(i);
+  });
+}
+function pick(k){
+  var w=W[k];
+  document.querySelectorAll('.wc').forEach(function(c){c.classList.remove('on');});
+  var cd=document.getElementById('c'+k);
+  if(cd){cd.classList.add('on');cd.scrollIntoView({behavior:'smooth',block:'nearest'});}
+  document.getElementById('rb').classList.add('on');
+  document.getElementById('rt').textContent='Ward '+k+' — '+w.jp.n+' (JP) · '+w.co.n+' (Constable)';
+  document.getElementById('rn').textContent=w.a;
+  document.getElementById('mph').style.display='none';
+  document.getElementById('mco').style.display='block';
+  document.getElementById('mwn').textContent=w.l+' — '+w.s;
+  document.getElementById('mjn').textContent=w.jp.n;
+  document.getElementById('mjp').textContent=w.jp.p;
+  document.getElementById('mcn').textContent=w.co.n;
+  document.getElementById('mcp').textContent=w.co.p;
+  document.querySelectorAll('.li').forEach(function(l){l.classList.remove('on');});
+  var le=document.getElementById('l'+k);if(le)le.classList.add('on');
+  Object.keys(lpolys).forEach(function(j){
+    var p=lpolys[j],wj=W[j];
+    if(j===k){p.setStyle({weight:4,opacity:1,fillOpacity:.12,color:wj.c});p.bringToFront();}
+    else{p.setStyle({weight:2,opacity:.6,fillOpacity:0,color:wj.c});}
+  });
+  if(lmap&&lpolys[k])lmap.fitBounds(lpolys[k].getBounds(),{padding:[20,20]});
+}
+function pip(lng,lat,pts){
+  var inside=false;
+  for(var i=0,j=pts.length-1;i<pts.length;j=i++){
+    var xi=pts[i][0],yi=pts[i][1],xj=pts[j][0],yj=pts[j][1];
+    if((yi>lat)!==(yj>lat)&&lng<(xj-xi)*(lat-yi)/(yj-yi)+xi)inside=!inside;
+  }return inside;
+}
+function wardFor(lat,lng){
+  var keys=Object.keys(POLYS);
+  for(var i=0;i<keys.length;i++){if(pip(lng,lat,POLYS[keys[i]]))return keys[i];}return null;
+}
+function doSearch(src){
+  var el=document.getElementById(src==='map'?'ms2':'ds');
+  var q=el.value.trim();if(!q)return;
+  var ql=q.toLowerCase();
+  for(var i=0;i<KW.length;i++){
+    var m=KW[i];
+    if(m.k.some(function(kw){return ql.indexOf(kw)>=0;})){
+      pick(m.w);
+      if(m.n)setTimeout(function(){document.getElementById('rn').textContent=m.n;},30);
+      showTab('map');return;
+    }
+  }
+  var full=(/louisiana|,\s*la\b|70\d{3}/.test(ql))?q:q+', St. Bernard Parish, Louisiana';
+  var orig=el.placeholder;el.placeholder='Searching...';
+  fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(full))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      el.placeholder=orig;
+      if(!d||!d.length){alert('Address not found. Try: "100 W Judge Perez Dr, Chalmette" or a community name.');return;}
+      var lat=parseFloat(d[0].lat),lng=parseFloat(d[0].lon);
+      var ward=wardFor(lat,lng);
+      showTab('map');
+      if(lmap){
+        if(pin)lmap.removeLayer(pin);
+        if(ward){
+          pick(ward);
+          pin=L.circleMarker([lat,lng],{radius:9,color:'#c9a84c',fillColor:'#c9a84c',fillOpacity:.95,weight:2}).addTo(lmap);
+          pin.bindPopup('<b style="color:#c9a84c">Ward '+ward+'</b><br><small>'+d[0].display_name.split(',').slice(0,2).join(',')+'</small>').openPopup();
+        }else{
+          lmap.setView([lat,lng],14);
+          pin=L.circleMarker([lat,lng],{radius:8,color:'#e74c3c',fillColor:'#e74c3c',fillOpacity:.9,weight:2}).addTo(lmap);
+          alert('Location found but outside known ward boundaries. Contact Clerk of Court: (504) 271-3434');
+        }
+      }
+    }).catch(function(){
+      el.placeholder=orig;
+      alert('Search needs internet. Try: Arabi, Chalmette, Meraux, Violet, Poydras, St. Bernard, Shell Beach');
+    });
+}
+function initMap(){
+  lmap=L.map('map',{center:[29.930,-89.880],zoom:12});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',maxZoom:19
+  }).addTo(lmap);
+  Object.keys(POLYS).forEach(function(k){
+    var pts=POLYS[k],w=W[k],ll=pts.map(function(p){return[p[1],p[0]];});
+    var poly=L.polygon(ll,{color:w.c,weight:2,opacity:.75,fillOpacity:0}).addTo(lmap);
+    var ctr=poly.getBounds().getCenter();
+    L.marker(ctr,{interactive:false,zIndexOffset:100,icon:L.divIcon({
+      html:'<div style="font-family:monospace;font-weight:900;font-size:13px;color:'+w.c+';text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;text-align:center;line-height:1.3;pointer-events:none">'+k+'<br><span style="font-size:8px;font-weight:400;color:rgba(255,255,255,.85)">'+w.s+'</span></div>',
+      className:'',iconAnchor:[20,14]
+    })}).addTo(lmap);
+    poly.bindTooltip('<b>Ward '+k+'</b> — '+w.s+'<br><small>'+w.jp.n+' (JP)</small>',{className:'wtt',sticky:true});
+    poly.on('click',function(){pick(k);});
+    lpolys[k]=poly;
+  });
+}
+document.addEventListener('DOMContentLoaded',function(){
+  buildCards();buildLegend();initMap();
+  document.getElementById('ds').addEventListener('keydown',function(e){if(e.key==='Enter')doSearch('dir');});
+  document.getElementById('ms2').addEventListener('keydown',function(e){if(e.key==='Enter')doSearch('map');});
+});
+</script>
+</body>
+</html>
